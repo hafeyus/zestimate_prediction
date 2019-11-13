@@ -220,7 +220,7 @@ if __name__ == '__main__':
 	    temp = regressor.predict(test_pool)
 	    result_16[col] = temp
 
-    # predict 2017 result
+	# predict 2017 result
 	test_17 = prop_17.copy()
 	test_17.insert(0, 'month', 0)
 	test_17.insert(1, 'month_since_2016', 0)
@@ -236,8 +236,8 @@ if __name__ == '__main__':
 	    temp = regressor.predict(test_pool)
 	    result_17[col] = temp
 
-    # prepare submission file
-    submission = result_16.merge(result_17, on='parcelid', how='left')
+	# prepare submission file
+	submission = result_16.merge(result_17, on='parcelid', how='left')
 	submission.iloc[:,1:] = submission.iloc[:, 1:].round(4)
 	submission.to_csv('submission_1617.csv', index=False)
 
