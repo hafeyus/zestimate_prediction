@@ -1,4 +1,7 @@
 # zestimate prediction
+## please refer to .py file
+## py notebook contains large amount of optimzation output and might not be good for reading.
+
 (dataset larger than allowed size on GitHub)
 
 Zillow is an online information platform for real estate with millions of home listed. Besides including the basic information like the area of the house and number of rooms, Zillow also built its own model to predict the sale price for property called Zestimate. However, a home's Zestimate does not always match the actual sale price of the property. The goal of this competition is to predict the error between the Zestimate and actual sale price. 
