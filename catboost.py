@@ -163,126 +163,126 @@ def bayes_param_opt(X, y, cat_feats, init_points=15, n_iter=25, n_folds=5, rando
     return optimizer.max
 
 if __name__ == '__main__':
-	# loading dataset
-	train_16 = pd.read_csv('./data/train_2016_v2.csv', parse_dates=['transactiondate'])
-	train_17 = pd.read_csv('./data/train_2017.csv', parse_dates=['transactiondate'])
-	properties_16 = pd.read_csv('./data/properties_2016.csv')
-	properties_17 = pd.read_csv('./data/properties_2017.csv')
+    # loading dataset
+    train_16 = pd.read_csv('./data/train_2016_v2.csv', parse_dates=['transactiondate'])
+    train_17 = pd.read_csv('./data/train_2017.csv', parse_dates=['transactiondate'])
+    properties_16 = pd.read_csv('./data/properties_2016.csv')
+    properties_17 = pd.read_csv('./data/properties_2017.csv')
 
 
-	# prepare training set 2016
-	prop_16 = get_prop(properties_16)
-	transac_16 = get_train(train_16)
-	df_16 = transac_16.merge(prop_16, how='left', on='parcelid')
+    # prepare training set 2016
+    prop_16 = get_prop(properties_16)
+    transac_16 = get_train(train_16)
+    df_16 = transac_16.merge(prop_16, how='left', on='parcelid')
 
-	# get categorical feature columns for training set 2016
-	cat_feats_16 = get_cat_feats(df_16)
-	df_16 = convert_cat_columns(df_16, cat_feats_16)
+    # get categorical feature columns for training set 2016
+    cat_feats_16 = get_cat_feats(df_16)
+    df_16 = convert_cat_columns(df_16, cat_feats_16)
 
-	# get train feature columns
-	train_feats_16 = [col for col in df_16 if col not in {'parcelid', 'logerror'}]
+    # get train feature columns
+    train_feats_16 = [col for col in df_16 if col not in {'parcelid', 'logerror'}]
 
-	# prepare x and y
-	x = df_16[train_feats_16]
-	y = df_16['logerror']
+    # prepare x and y
+    x = df_16[train_feats_16]
+    y = df_16['logerror']
 
 
-	# Baysian Optimization to find optimal hyperparameters
-	opt_result = bayes_param_opt(x, y, cat_feats_16)
-	opt_cat_params = opt_result['params']
-	opt_cat_params['max_depth'] = int(opt_cat_params['max_depth'])
-	opt_cat_params['iterations'] = 886
-	additional_params = {'loss_function':'MAE', 
-						  'random_seed':1,
-						  'eval_metric':'MAE',
-						  'use_best_model':True, 
-						  'early_stopping_rounds':50, 
-						  'bootstrap_type':'Bernoulli'}
-	opt_cat_params.update(additional_params)
+    # Baysian Optimization to find optimal hyperparameters
+    opt_result = bayes_param_opt(x, y, cat_feats_16)
+    opt_cat_params = opt_result['params']
+    opt_cat_params['max_depth'] = int(opt_cat_params['max_depth'])
+    opt_cat_params['iterations'] = 886
+    additional_params = {'loss_function':'MAE', 
+    					  'random_seed':1,
+    					  'eval_metric':'MAE',
+    					  'use_best_model':True, 
+    					  'early_stopping_rounds':50, 
+    					  'bootstrap_type':'Bernoulli'}
+    opt_cat_params.update(additional_params)
 
-	# prepare training pool for catboost
-	dtrain = Pool(data=x, label=y, cat_features=cat_feats_16)
+    # prepare training pool for catboost
+    dtrain = Pool(data=x, label=y, cat_features=cat_feats_16)
 
-	# build 2016 model
-	regressor_16 = CatBoostRegressor(subsample=0.8885796692189906,
-									  l2_leaf_reg=4.469523358625079,
-									  learning_rate=0.07802234255790369,
-									  max_depth=5,
-									  iterations=886,
-									  loss_function='MAE', 
-									  random_seed=1,
-									  eval_metric='MAE',
-									  bootstrap_type='Bernoulli')
+    # build 2016 model
+    regressor_16 = CatBoostRegressor(subsample=0.8885796692189906,
+    								  l2_leaf_reg=4.469523358625079,
+    								  learning_rate=0.07802234255790369,
+    								  max_depth=5,
+    								  iterations=886,
+    								  loss_function='MAE', 
+    								  random_seed=1,
+    								  eval_metric='MAE',
+    								  bootstrap_type='Bernoulli')
 
-	regressor_16.fit(X=dtrain) 
+    regressor_16.fit(X=dtrain) 
 
-	# predict 2016 result
-	test_16 = prop_16.copy()
-	test_16.insert(0, 'month', 0)
-	test_16.insert(1, 'month_since_2016', 0)
-	test_16.insert(2, 'quarter', 4)
-	test_16 = convert_cat_columns(test_16, cat_feats_16)
-	test_month = [(10, 201610), (11, 201611), (12, 201612)]
-	result_16 = pd.DataFrame()
-	result_16['parcelid'] = prop_16['parcelid']
-	for month, col in test_month:
-	    test_16['month'] = month
-	    test_16['month_since_2016'] = month
-	    test_pool = Pool(data=test_16[train_feats_16], cat_features=cat_feats_16)
-	    temp = regressor_16.predict(test_pool)
-	    result_16[col] = temp
+    # predict 2016 result
+    test_16 = prop_16.copy()
+    test_16.insert(0, 'month', 0)
+    test_16.insert(1, 'month_since_2016', 0)
+    test_16.insert(2, 'quarter', 4)
+    test_16 = convert_cat_columns(test_16, cat_feats_16)
+    test_month = [(10, 201610), (11, 201611), (12, 201612)]
+    result_16 = pd.DataFrame()
+    result_16['parcelid'] = prop_16['parcelid']
+    for month, col in test_month:
+        test_16['month'] = month
+        test_16['month_since_2016'] = month
+        test_pool = Pool(data=test_16[train_feats_16], cat_features=cat_feats_16)
+        temp = regressor_16.predict(test_pool)
+        result_16[col] = temp
 
 
 
     # 2017
-	# prepare training set 2016
-	prop_17 = get_prop(properties_17)
-	transac_17 = get_train(train_17)
-	df_17 = transac_17.merge(prop_17, how='left', on='parcelid')
+    # prepare training set 2016
+    prop_17 = get_prop(properties_17)
+    transac_17 = get_train(train_17)
+    df_17 = transac_17.merge(prop_17, how='left', on='parcelid')
 
-	# get categorical feature columns for training set 2016
-	cat_feats_17 = get_cat_feats(df_17)
-	df_17 = convert_cat_columns(df_17, cat_feats_17)
+    # get categorical feature columns for training set 2016
+    cat_feats_17 = get_cat_feats(df_17)
+    df_17 = convert_cat_columns(df_17, cat_feats_17)
 
-	# get train feature columns
-	train_feats_17 = [col for col in df_17 if col not in {'parcelid', 'logerror'}]
+    # get train feature columns
+    train_feats_17 = [col for col in df_17 if col not in {'parcelid', 'logerror'}]
 
-	# prepare x and y
-	x = df_17[train_feats_17]
-	y = df_17['logerror']
-	dtrain = Pool(data=x, label=y, cat_features=cat_feats_17)
+    # prepare x and y
+    x = df_17[train_feats_17]
+    y = df_17['logerror']
+    dtrain = Pool(data=x, label=y, cat_features=cat_feats_17)
 
-	regressor_17 = CatBoostRegressor(subsample=0.8885796692189906,
-									  l2_leaf_reg=4.469523358625079,
-									  learning_rate=0.07802234255790369,
-									  max_depth=5,
-									  iterations=477,
-									  loss_function='MAE', 
-									  random_seed=1,
-									  eval_metric='MAE',
-									  bootstrap_type='Bernoulli')
+    regressor_17 = CatBoostRegressor(subsample=0.8885796692189906,
+    								  l2_leaf_reg=4.469523358625079,
+    								  learning_rate=0.07802234255790369,
+    								  max_depth=5,
+    								  iterations=477,
+    								  loss_function='MAE', 
+    								  random_seed=1,
+    								  eval_metric='MAE',
+    								  bootstrap_type='Bernoulli')
 
-	regressor_17.fit(X=dtrain) 
+    regressor_17.fit(X=dtrain) 
 
-	# predict 2017 result
-	test_17 = prop_17.copy()
-	test_17.insert(0, 'month', 0)
-	test_17.insert(1, 'month_since_2016', 0)
-	test_17.insert(2, 'quarter', 4)
-	test_17 = convert_cat_columns(test_17, cat_feats_17)
-	test_month = [(10, 201710), (11, 201711), (12, 201712)]
-	result_17 = pd.DataFrame()
-	result_17['parcelid'] = prop_17['parcelid']
-	for month, col in test_month:
-	    test_17['month'] = month
-	    test_17['month_since_2016'] = month + 12
-	    test_pool = Pool(data=test_17[train_feats_17], cat_features=cat_feats_17)
-	    temp = regressor_17.predict(test_pool)
-	    result_17[col] = temp
+    # predict 2017 result
+    test_17 = prop_17.copy()
+    test_17.insert(0, 'month', 0)
+    test_17.insert(1, 'month_since_2016', 0)
+    test_17.insert(2, 'quarter', 4)
+    test_17 = convert_cat_columns(test_17, cat_feats_17)
+    test_month = [(10, 201710), (11, 201711), (12, 201712)]
+    result_17 = pd.DataFrame()
+    result_17['parcelid'] = prop_17['parcelid']
+    for month, col in test_month:
+        test_17['month'] = month
+        test_17['month_since_2016'] = month + 12
+        test_pool = Pool(data=test_17[train_feats_17], cat_features=cat_feats_17)
+        temp = regressor_17.predict(test_pool)
+        result_17[col] = temp
 
 
     # prepare submission csv
     submission = result_16.merge(result_17, on='parcelid', how='left')
-	submission.iloc[:,1:] = submission.iloc[:, 1:].round(4)
-	submission.to_csv('submission_2.csv', index=False)
+    submission.iloc[:,1:] = submission.iloc[:, 1:].round(4)
+    submission.to_csv('submission_2.csv', index=False)
 
